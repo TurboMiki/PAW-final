@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block title %}Your Devices{% endblock %}
+
+{% block content %}
+
+<hr>
+<h1>Your Devices</h1>
+<hr>
+
+<div class='device_list'>
+    
+    {% if user_devices %}
+
+        {% for item in user_devices %}
+
+            <div class='device_tile'>
+                <h5 class="card-title">{{ item.device.name }}</h5>
+                <p class="card-text">{{ item.device.num_used }}/{{ item.device.max_uses }}</p>
+                <div class="progress mb-3">
+                    <div class="progress-bar" role="progressbar" style="width: {{ item.device.num_used|calc_progress:item.device.max_uses }}%;" aria-valuenow="{{ item.device.num_used }}" aria-valuemin="0" aria-valuemax="{{ item.device.max_uses }}"></div>
+                </div>
+                <p class="card-text">Return by: {{ item.return_time }}</p>
+                <form action="{% url 'return_device' item.device.id %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-warning btn-sm">Return</button>
+                </form>
+            </div>
+        {% endfor %}
+
+    {% else %}
+        <p>You have not rented any devices.</p>
+    {% endif %}
+</div>
+
+{% endblock %}

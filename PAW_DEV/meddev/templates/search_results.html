@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block title %}Search Results{% endblock %}
+
+{% block content %}
+    <hr>
+    <h1>Search Results for "{{ query }}"</h1>
+    <hr>
+
+    {% if devices %}
+        <h2>Devices</h2>
+        <div class='device_list'>
+            {% for device in devices %}
+                <div class='device_tile'>
+                    <h5 class="card-title">{{ device.name }}</h5>
+                    <p class="card-text">{{ device.num_used }}/{{ device.max_uses }}</p>
+                    <div class="progress mb-3">
+                        <div class="progress-bar" role="progressbar" style="width: {{ device.num_used|calc_progress:device.max_uses }}%;" aria-valuenow="{{ device.num_used }}" aria-valuemin="0" aria-valuemax="{{ device.max_uses }}"></div>
+                    </div>
+                    <div>
+                        <div>
+                            <form action="{% url 'delete_device' device.id %}" method="post" style="margin-top: 10px;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                            </form>
+                            {% if device.available and device.num_used < device.max_uses %}
+                                <form action="{% url 'borrow_device' device.id %}" method="post" style="margin-top: 10px;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="device_id" value="{{ device.id }}">
+                                    <button type="submit" class="btn btn-success">Rent</button>
+                                    <label for="room">Room:</label>
+                                    <select name="room" id="room">
+                                        {% for room in room_list %}
+                                            <option value="{{ room.id }}">{{ room.room_number }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </form>
+                            {% elif device.num_used >= device.max_uses %}
+                                <div class="limit_reached">
+                                    <button type="button" class="btn btn-secondary" disabled style="margin-top: 10px;">Limit reached</button>
+                                    <form action="{% url 'autoclave_device' device.id %}" method="post" style="margin-left: 10px;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="device_id" value="{{ device.id }}">
+                                        <button type="submit" class="btn btn-warning" style="margin-top: 10px;">Autoclave</button>
+                                    </form>
+                                </div>
+                            {% else %}
+                                <button type="button" class="btn btn-secondary" disabled style="margin-top: 10px;">Rented</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if rooms %}
+        <h2>Rooms</h2>
+            {% for room in rooms %}
+                <div class='device_tile'>
+                    <h5 class="card-title">Room number: {{ room.room_number }}</h5>
+                    <p class="card-text">{{ room.description }}</p>
+                </div>
+            {% endfor %}
+    {% endif %}
+
+    {% if not devices and not rooms %}
+        <p>No results found.</p>
+    {% endif %}
+{% endblock %}

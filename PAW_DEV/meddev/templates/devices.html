@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block title %}Manage devices{% endblock %}
+
+{% block content %}
+    <hr>
+    <h1> Here you can manage devices</h1>
+    <hr>
+    <h1>Add Device</h1>
+        <div class="add_device">
+            <div class = "form">
+                <form action="{% url 'devices' %}" method=post >
+                    {% csrf_token %}
+                    <table>
+                        {% for field in device_form %}
+                        <tr>
+                            <td >{{ field.label_tag }}</td>
+                            <td >{{ field }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                    <br>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+            </div>
+        </div>
+        <hr>
+        <h1>Upload CSV</h1>
+        <div class="add_device">
+            <div id="drop-area" class="drop-area">
+                <p>Drag & Drop CSV file here or click to browse</p>
+                <div class="add_device">
+                    <div id="file-upload-status"></div>
+                </div>    
+                <form id="csv-upload-form" class="my-form" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="file" id="csv-file" name="csv_file" accept=".csv">
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+            </div>
+        </div>
+        <script>
+            // JavaScript for drag-and-drop functionality
+            const dropArea = document.getElementById('drop-area');
+        
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+            });
+        
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        
+            dropArea.addEventListener('drop', handleDrop, false);
+        
+            function handleDrop(e) {
+                let dt = e.dataTransfer;
+                let files = dt.files;
+        
+                handleFiles(files);
+            }
+        
+            const fileInput = document.getElementById('csv-file');
+            fileInput.addEventListener('change', function() {
+                handleFiles(this.files);
+            });
+        
+            function handleFiles(files) {
+                const formData = new FormData();
+                formData.append('csv_file', files[0]);
+        
+                fetch('{% url "upload_csv" %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('file-upload-status').innerText = data.message;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+        </script>
+    <hr>
+    <h1>Device List</h1>
+    <div class='device_list'>
+        {% if devices %}
+            {% for device in devices %}
+                    <div class='device_tile'>
+                        {{ device.name }}<br>
+                        {{ device.num_used }}/{{ device.max_uses }}
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" style="width: {{ device.num_used|calc_progress:device.max_uses }}%; " aria-valuenow="{{ device.num_used }}" aria-valuemin="0" aria-valuemax="{{ device.max_uses }}"></div>
+                            </div>
+                        <div>
+                            <div>
+                                <form action="{% url 'delete_device' device.id %}" method="post" style="margin-top: 10px;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                </form>
+                                {% if device.available and device.num_used < device.max_uses %}
+                                    <form action="{% url 'borrow_device' device.id %}" method="post" style="margin-top: 10px;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="device_id" value="{{ device.id }}">
+                                        <button type="submit" class="btn btn-success">Rent</button>
+                                        <label for="room">Room:</label>
+                                        <select name="room" id="room">
+                                            {% for room in room_list %}
+                                                <option value="{{ room.id }}">{{ room.room_number }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </form>
+                                {% elif device.num_used >= device.max_uses %}
+                                    <div class="limit_reached">
+                                        <button type="button" class="btn btn-secondary" disabled style="margin-top: 10px;">Limit reached</button>
+                                        <form action="{% url 'autoclave_device' device.id %}" method="post" style="margin-left: 10px;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="device_id" value="{{ device.id }}">
+                                            <button type="submit" class="btn btn-warning" style="margin-top: 10px;">Autoclave</button>
+                                        </form>
+                                    </div>
+                                {% else %}
+                                    <button type="button" class="btn btn-secondary" disabled style="margin-top: 10px;">Rented</button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <script>
+                        function progress_percentage(numUsed, maxUses) {
+                            return (numUsed / maxUses) * 100 + '%';
+                        }
+                    </script>
+            {% endfor %}
+        {% else %}
+            <strong>There are no devices defined.</strong>
+        {% endif %}
+    </div>
+    <hr>
+    <h1>Export Devices to CSV</h1>
+    <a href="{% url 'export_devices_csv' %}" class="btn btn-primary" style="margin-top: 20px;">Export to CSV</a>
+    <br>
+    <br>
+
+{% endblock %}

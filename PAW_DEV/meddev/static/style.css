@@ -1,0 +1,50 @@
+.add_device{
+    border: 1px solid rgb(0, 89, 255);
+    border-radius: 12px;
+    margin: 1%;
+    padding: 1%;
+}
+.user_profile{
+    border: 1px solid rgb(0, 89, 255);
+    border-radius: 12px;
+    margin: 1%;
+    padding: 1%;
+}
+
+.form{
+    margin-left: 2%;
+}
+
+.device_list{
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.device_tile{
+    width: 20%;
+    height: 20%;
+    border: 1px solid rgb(0, 89, 255);
+    border-radius: 12px;
+    margin: 1%;
+    padding: 1%;
+}
+
+.progress {
+    width: 100%;
+    background-color: #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+    height: 20px;
+    margin-top: 10px;
+}
+
+.progress-bar {
+    height: 100%;
+    transition: width 0.4s ease;
+    background: #0F98FA;
+}
+
+.limit_reached{
+    display: flex;
+    flex-wrap: wrap;
+}
